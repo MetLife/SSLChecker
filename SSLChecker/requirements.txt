@@ -1,0 +1,12 @@
+azure-functions
+asn1crypto==1.2.0
+cffi==1.13.2
+cryptography==2.5
+dnspython==1.16.0
+nassl==2.2.0
+pycparser==2.19
+requests==2.22.0
+six==1.13.0
+sslyze==2.1.4
+tls-parser==1.2.1
+validators==0.14.1

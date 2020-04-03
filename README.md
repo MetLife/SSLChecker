@@ -1,0 +1,29 @@
+# SSLChecker
+
+## Overview
+
+SSLChecker is a serverless API written in Python and running on Azure Functions. The API is based on Alban Diquet's [SSLyze](https://github.com/nabla-c0d3/sslyze) library. SSLChecker is used to identify obsolete versions of SSL/TLS (e.g., SSL 3.0, and TLS 1.0) on an endpoint, or perform a full scan to identify all supported versions of SSL/TLS on an endpoint.
+
+## Pre-requisites
+
+Development - To set up a local development environment, follow the guidance from Microsoft [here](https://docs.microsoft.com/en-us/dazure/azure-functions/functions-create-first-function-python?tabs=bash%2Cbrowser).
+
+Deployment - As part of the above setup, you will be able to deploy to Azure using the azure-cli. Additionally, Azure DevOps or another CI/CD tool is capable of deploying to Azure.
+
+## Usage
+
+Invoke the function on the command line using curl:
+
+``` curl http://<functionname>.azurewebsite.net/api/{scan:alpha}/{view:alpha}/{name}```
+
+There are three parts to pass to the URI: scan, view, and name.
+
+"scan" is the type of scan: policy or full. Currently, the default policy prohibits using SSL 2.0/3.0 and TLS 1.0, so the policy scan will identify which unsupported ciphers are in use, if any. A full scan will report back all supported ciphers. In a future release I will make this configurable.
+
+Since corporations often use [split-view DNS](https://en.wikipedia.org/wiki/Split-horizon_DNS), "view" in this context is the network viewpoint you want to scan, either internal or external. This is accomplished by specifying a valid DNS server to use for name resolution. The default value for external will use OpenDNS (e.g. 208.67.222.222). The default for internal will be 0.0.0.0 and will result in an error if a scan is attempted and no internal DNS server is specified.
+
+"name" should be the DNS domain name you would like to scan (i.e., github.com).
+
+## Feedback
+
+Send me mail at joe@metlife.com
