@@ -24,6 +24,14 @@ Since corporations often use [split-view DNS](https://en.wikipedia.org/wiki/Spli
 
 "name" should be the DNS domain name you would like to scan (i.e., github.com).
 
+## A Note on Authentication
+
+Microsoft has extensive documentation on how to secure an HTTP endpoint in Azure Functions [here](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=csharp#secure-an-http-endpoint-in-production). There are two main ways to secure a function: Turn on App Service Authentication/Authorization for the function app, or use Azure API Management (APIM) to authentication requests. Additionally, Azure functions support API key authorization that you can supply either as a query string variable or in a HTTP header. Microsoft states that API key authorization is not intended as a way to secure an HTTP trigger in production
+
+By default, I have set the authLevel in the function.json file to *anonymous. Please note, when running functions locally, authorization is disabled regardless of the specified authorization level.
+
+If you plan on running SSLChecker on the internet, please consider one of the above options for authentication.
+
 ## Feedback
 
 Send me mail at joe@metlife.com
