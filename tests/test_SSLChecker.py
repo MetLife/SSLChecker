@@ -87,27 +87,6 @@ def test_external_dns_name_not_resolved():
     assert results["Message"] == 'Domain exits but no A record'
 
 
-def test_internal_dns_name_not_resolved():
-    # Construct a mock HTTP request
-    req = func.HttpRequest(
-            method='GET',
-            body=None,
-            url='/api/',
-            route_params={'scan': 'policy',
-                          'view': 'internal',
-                          'name': 'joegatt.com'}
-            )
-
-    # Call the function
-    resp = main(req)
-
-    # Convert resp string to dict
-    results = json.loads(resp)
-
-    # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Domain exits but no A record'
-
-
 def test_external_dns_name_not_exist():
     # Construct a mock HTTP request
     req = func.HttpRequest(
@@ -129,27 +108,6 @@ def test_external_dns_name_not_exist():
     assert results["Message"] == 'The DNS name does not exist'
 
 
-def test_internal_dns_name_not_exist():
-    # Construct a mock HTTP request
-    req = func.HttpRequest(
-            method='GET',
-            body=None,
-            url='/api/',
-            route_params={'scan': 'policy',
-                          'view': 'internal',
-                          'name': 'jeogatt.com'}
-            )
-
-    # Call the function
-    resp = main(req)
-
-    # Convert resp string to dict
-    results = json.loads(resp)
-
-    # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'The DNS name does not exist'
-
-
 def test_external_sslyze_timeout():
     # Construct a mock HTTP request
     req = func.HttpRequest(
@@ -158,27 +116,6 @@ def test_external_sslyze_timeout():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'bbbbbbbbbbbbbbb.com'}
-            )
-
-    # Call the function
-    resp = main(req)
-
-    # Convert resp string to dict
-    results = json.loads(resp)
-
-    # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Connection to TCP 443 timed-out'
-
-
-def test_internal_sslyze_timeout():
-    # Construct a mock HTTP request
-    req = func.HttpRequest(
-            method='GET',
-            body=None,
-            url='/api/',
-            route_params={'scan': 'policy',
-                          'view': 'internal',
                           'name': 'bbbbbbbbbbbbbbb.com'}
             )
 
