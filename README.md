@@ -6,7 +6,7 @@ SSLChecker is a serverless API written in Python and running on Azure Functions.
 
 ## Pre-requisites
 
-Development - To set up a local development environment, follow the guidance from Microsoft [here](https://docs.microsoft.com/en-us/dazure/azure-functions/functions-create-first-function-python?tabs=bash%2Cbrowser).
+Development - To set up a local development environment, follow the guidance from Microsoft [here](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?pivots=programming-language-python&tabs=bash%2Cbrowser).
 
 Deployment - As part of the above setup, you will be able to deploy to Azure using the azure-cli. Additionally, Azure DevOps or another CI/CD tool is capable of deploying to Azure.
 
