@@ -32,7 +32,7 @@ Please verify that your issue is not being currently addressed by other issues o
 ## Submitting Changes
 
 * Push your changes to a topic branch in your fork of the repository.
-* Submit a pull request to the repository in the Nike-Inc organization.
+* Submit a pull request to the repository in the MetLife organization.
 * After feedback has been given we expect responses within two weeks. After two weeks we may close the pull request if it isn't showing any activity.
 * Bug fixes or features that lack appropriate tests may not be considered for merge.
 * Changes that lower test coverage may not be considered for merge.
