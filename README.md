@@ -14,15 +14,17 @@ Deployment - As part of the above setup, you will be able to deploy to Azure usi
 
 Invoke the function on the command line using curl:
 
-``` curl http://<functionname>.azurewebsite.net/api/{scan:alpha}/{view:alpha}/{name}```
+``` curl http://<functionname>.azurewebsite.net/api/{scan:alpha}/{view:alpha}/{name}/{port}```
 
-There are three parts to pass to the URI: scan, view, and name.
+There are four parts to pass to the URI: scan, view, name and port.
 
 "scan" is the type of scan: policy or full. Currently, the default policy prohibits using SSL 2.0/3.0 and TLS 1.0, so the policy scan will identify which unsupported ciphers are in use, if any. A full scan will report back all supported ciphers. In a future release I will make this configurable.
 
-Since corporations often use [split-view DNS](https://en.wikipedia.org/wiki/Split-horizon_DNS), "view" in this context is the network viewpoint you want to scan, either internal or external. This is accomplished by specifying a valid DNS server to use for name resolution. The default value for external will use OpenDNS (e.g. 208.67.222.222). The default for internal will be 0.0.0.0 and will result in an error if a scan is attempted and no internal DNS server is specified.
+Since corporations often use [split-view DNS](https://en.wikipedia.org/wiki/Split-horizon_DNS), "view" in this context is the network viewpoint you want to scan, either internal or external. This is accomplished by specifying a valid DNS server to use for name resolution. The default value for external will use OpenDNS (e.g. 208.67.222.222). The default for internal will be 0.0.0.0 and will result in an error if a scan is attempted and no internal DNS server is specified. Please modify the config.ini file to use an internal DNS server.
 
 "name" should be the DNS domain name you would like to scan (i.e., github.com).
+
+"port" is optional and if omitted will default to TCP 443.
 
 ## A Note on Authentication
 
