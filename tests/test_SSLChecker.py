@@ -264,3 +264,69 @@ def test_missing_policy_view_dns_name():
                                   " valid scan type: policy or full, "
                                   "valid DNS view: internal or external, "
                                   "and a valid DNS domain name")
+
+
+def test_external_bad_port():
+    # Construct a mock HTTP request
+    req = func.HttpRequest(
+            method='GET',
+            body=None,
+            url='/api/',
+            route_params={'scan': 'policy',
+                          'view': 'external',
+                          'name': 'yahoo.com',
+                          'port': 'a'}
+            )
+
+    # Call the function
+    resp = main(req)
+
+    # Convert resp string to dict
+    results = json.loads(resp)
+
+    # Check the output to ensure the DNS name could not resolve
+    assert results["Message"] == 'Please pass a valid port'
+
+
+def test_external_port_timeout():
+    # Construct a mock HTTP request
+    req = func.HttpRequest(
+            method='GET',
+            body=None,
+            url='/api/',
+            route_params={'scan': 'policy',
+                          'view': 'external',
+                          'name': 'yahoo.com',
+                          'port': '8443'}
+            )
+
+    # Call the function
+    resp = main(req)
+
+    # Convert resp string to dict
+    results = json.loads(resp)
+
+    # Check the output to ensure the DNS name could not resolve
+    assert results["Message"] == 'Connection to TCP 8443 timed-out'
+
+
+def test_external_port_not_in_range():
+    # Construct a mock HTTP request
+    req = func.HttpRequest(
+            method='GET',
+            body=None,
+            url='/api/',
+            route_params={'scan': 'policy',
+                          'view': 'external',
+                          'name': 'espn.com',
+                          'port': '123456'}
+            )
+
+    # Call the function
+    resp = main(req)
+
+    # Convert resp string to dict
+    results = json.loads(resp)
+
+    # Check the output to ensure the DNS name could not resolve
+    assert results["Message"] == 'Please pass a valid port in range 0-65535'

@@ -24,15 +24,15 @@ SynchronousScanner.DEFAULT_NETWORK_RETRIES = 1
 SynchronousScanner.DEFAULT_NETWORK_TIMEOUT = 3
 
 
-def scan(name, ip, view, suite):
-    """ Two inputs: web site name and ip
-    TODO: extend this to include port """
+def scan(name, ip, port, view, suite):
+    """ Five inputs: web site name, ip, port
+    split-dns view, and cipher suite """
 
     try:
         server_tester = ServerConnectivityTester(
             hostname=name,
             ip_address=ip,
-            port=443,
+            port=port,
             tls_wrapped_protocol=TlsWrappedProtocolEnum.HTTPS
             )
         # This line checks to see if the host is online
@@ -41,7 +41,7 @@ def scan(name, ip, view, suite):
     # Could not establish an SSL connection to the server
     except ConnectionToServerTimedOut:
         error = results.set_error(f'{name}',
-                                  "Connection to TCP 443 timed-out")
+                                  f"Connection to TCP {port} timed-out")
         return error
     except ServerConnectivityError:
         error = results.set_error(f'{name}',
