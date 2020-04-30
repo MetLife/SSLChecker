@@ -20,7 +20,7 @@ ERROR_MSG_MISSING_PARAMETERS = \
     ("Please pass three parameters in the URI: "
      "valid scan type: policy or full, valid DNS view: internal or external, "
      "and a valid DNS domain name. For example: "
-     "https://sslchecker.metlife.com/api/full/www.google.com")
+     "https://<functionname>.azurewebsite.net/api/full/www.google.com")
 
 ERROR_MSG_INVALID_SCANNER_TYPE = \
     "Please pass a valid scan type: 'policy' or 'full'"
@@ -102,7 +102,7 @@ def main(req: func.HttpRequest) -> str:
         ip = shared_dns.resolve_dns(dnsview.get(view), name)
     except Exception as err:
         error = results.set_error(f"dns resolution error for '{name}'",
-                                str(err))
+                                  str(err))
         return json.dumps(error)
 
     # Run the scan
