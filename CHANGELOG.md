@@ -5,3 +5,6 @@
 
 # v1.1.0
 - Added the ability to pass a port to SSLScanner
+
+# v1.2.0
+- Added some type annotations and more consistent error for the main function

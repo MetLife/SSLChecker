@@ -14,7 +14,7 @@ Deployment - As part of the above setup, you will be able to deploy to Azure usi
 
 Invoke the function on the command line using curl:
 
-``` curl http://<functionname>.azurewebsite.net/api/{scan:alpha}/{view:alpha}/{name}/{port}```
+``` curl https://<functionname>.azurewebsite.net/api/{scan:alpha}/{view:alpha}/{name}/{port}```
 
 There are four parts to pass to the URI: scan, view, name and port.
 
