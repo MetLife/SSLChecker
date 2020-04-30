@@ -1,12 +1,8 @@
 # Setters for the results dictionary
 
 
-def set_error(name, message):
-    global _error
-    _error = {}
-    _error = {"Hostname": name, "Message": message}
-    return _error
-
+def set_error(error_type, message):
+    return {'Error Type': error_type, "Message": message}
 
 def new():
     return {

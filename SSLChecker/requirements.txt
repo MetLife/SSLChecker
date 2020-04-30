@@ -10,3 +10,4 @@ six==1.13.0
 sslyze==2.1.4
 tls-parser==1.2.1
 validators==0.14.1
+typing-extensions==3.7.4.2

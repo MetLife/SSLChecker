@@ -23,7 +23,9 @@ ciphersuites = {
 SynchronousScanner.DEFAULT_NETWORK_RETRIES = 1
 SynchronousScanner.DEFAULT_NETWORK_TIMEOUT = 3
 
-
+ERROR_MSG_CONNECTION_TIMEOUT = 'TCP connection to {}:{} timed-out'.format
+ERROR_MSG_UNKNOWN_CONNECTION_ERR = \
+    'TCP connection to {}:{} encountered unknown error'.format
 def scan(name, ip, port, view, suite):
     """ Five inputs: web site name, ip, port
     split-dns view, and cipher suite """
@@ -40,12 +42,12 @@ def scan(name, ip, port, view, suite):
         ip = server_info.ip_address
     # Could not establish an SSL connection to the server
     except ConnectionToServerTimedOut:
-        error = results.set_error(f'{name}',
-                                  f"Connection to TCP {port} timed-out")
+        error = results.set_error('Connection Timeout',
+                                  ERROR_MSG_CONNECTION_TIMEOUT(name, port))
         return error
     except ServerConnectivityError:
-        error = results.set_error(f'{name}',
-                                  "Unknown Error")
+        error = results.set_error('Unknown Error',
+                                  ERROR_MSG_UNKNOW_CONNECTION_ERROR(name, port))
         return error
 
     # Create a new results dictionary
