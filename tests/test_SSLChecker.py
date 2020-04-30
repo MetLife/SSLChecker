@@ -126,7 +126,7 @@ def test_external_sslyze_timeout():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Connection to TCP 443 timed-out'
+    assert results["Message"] == 'TCP connection to bbbbbbbbbbbbbbb.com:443 timed-out'
 
 
 def test_external_missing_dns_name():
@@ -150,7 +150,8 @@ def test_external_missing_dns_name():
     assert results["Message"] == ("Please pass three parameters in the URI:"
                                   " valid scan type: policy or full, "
                                   "valid DNS view: internal or external, "
-                                  "and a valid DNS domain name")
+                                  "and a valid DNS domain name. For example: "
+                                  "https://<functionname>.azurewebsite.net/api/full/www.google.com")
 
 
 def test_bad_dns_view_input():
@@ -194,7 +195,7 @@ def test_bad_policy_input():
 
     # Ensure error handling is working properly
     assert results["Message"] == ("Please pass a valid scan"
-                                  " type: policy or full")
+                                  " type: 'policy' or 'full'")
 
 
 def test_missing_dns_view():
@@ -218,7 +219,8 @@ def test_missing_dns_view():
     assert results["Message"] == ("Please pass three parameters in the URI:"
                                   " valid scan type: policy or full, "
                                   "valid DNS view: internal or external, "
-                                  "and a valid DNS domain name")
+                                  "and a valid DNS domain name. For example: "
+                                  "https://<functionname>.azurewebsite.net/api/full/www.google.com")
 
 
 def test_bad_dns_name():
@@ -263,7 +265,8 @@ def test_missing_policy_view_dns_name():
     assert results["Message"] == ("Please pass three parameters in the URI:"
                                   " valid scan type: policy or full, "
                                   "valid DNS view: internal or external, "
-                                  "and a valid DNS domain name")
+                                  "and a valid DNS domain name. For example: "
+                                  "https://<functionname>.azurewebsite.net/api/full/www.google.com")
 
 
 def test_external_bad_port():
@@ -285,7 +288,7 @@ def test_external_bad_port():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Please pass a valid port'
+    assert results["Message"] == 'Please pass a valid port in range 1-65535'
 
 
 def test_external_port_timeout():
@@ -307,7 +310,7 @@ def test_external_port_timeout():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Connection to TCP 8443 timed-out'
+    assert results["Message"] == 'TCP connection to yahoo.com:8443 timed-out'
 
 
 def test_external_port_not_in_range():
@@ -329,4 +332,4 @@ def test_external_port_not_in_range():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Please pass a valid port in range 0-65535'
+    assert results["Message"] == 'Please pass a valid port in range 1-65535'
