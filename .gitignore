@@ -86,3 +86,6 @@ pyvenv.cfg
 
 # Pytest Results
 test-output.xml
+
+# vim swap
+*.swp
