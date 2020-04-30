@@ -15,3 +15,6 @@ class InvalidRequest(Exception):
 
 class DNSError(Exception):
     pass
+
+class ConnectionError(Exception):
+    pass

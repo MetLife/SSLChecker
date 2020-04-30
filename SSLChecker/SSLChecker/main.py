@@ -8,7 +8,8 @@ import azure.functions as func
 from ..sharedcode import shared_dns
 from ..sharedcode import scanner
 from ..sharedcode import results
-from ..sharedcode.errors import InvalidRequest, DNSError, InvalidConfig
+from ..sharedcode.errors import (InvalidRequest, DNSError, InvalidConfig,
+                                 ConnectionError)
 
 external_dns, internal_dns = shared_dns.get_dns_options()
 
@@ -48,6 +49,7 @@ def pre_scan_check(req: func.HttpRequest) -> Tuple[str, str, str, int, str]:
     ------
     InvalidRequest
     InvalidConfig
+    DNSError
     """
     scan_type = req.route_params.get('scan')
     view = req.route_params.get('view')
@@ -116,7 +118,7 @@ def main(req: func.HttpRequest) -> str:
         elapsedtime = process_time() - starttime
         logging.info(f'{name} processed for {elapsedtime}')
         return json.dumps(scanjob)
-    except (InvalidRequest, InvalidConfig, DNSError) as err:
+    except (InvalidRequest, InvalidConfig, DNSError, ConnectionError) as err:
         return json.dumps(results.set_error(err.args[0], err.args[1]))
     except Exception as err:
         return json.dumps(results.set_error("Unexpected Error", str(err)))
