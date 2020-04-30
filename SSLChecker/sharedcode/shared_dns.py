@@ -21,7 +21,8 @@ def get_dns_options() -> Tuple[str, str]:
         external_dns = parser.get('dns_view', 'external')
         internal_dns = parser.get('dns_view', 'internal')
     except ParsingError as err:
-        raise InvalidConfig(f'{config_file.resolve()}', err)
+        raise InvalidConfig( 'Invalid Configuration File '
+                            f'{config_file.resolve()}', err)
 
     return external_dns, internal_dns
 
