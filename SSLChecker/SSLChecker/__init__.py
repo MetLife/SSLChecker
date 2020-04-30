@@ -24,6 +24,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     scan_type = req.route_params.get('scan')
     view = req.route_params.get('view')
     name = req.route_params.get('name')
+    port = req.route_params.get('port')
+
+    # Port is optional and will default to 443 if none is provided
+    if port is None:
+        port = 443
+    elif port.isnumeric() is False:
+        error = {"Message": ("Please pass a valid port")}
+        return json.dumps(error)
+    elif int(port) > 65535:
+        error = {"Message": ("Please pass a valid port"
+                             " in range 0-65535")}
+        return json.dumps(error)
 
     """ Check to ensure ALL parameters were passed in the URI.
     If you mark the route parameters in function.json as mandatory,
@@ -82,7 +94,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return json.dumps(error)
 
     # Run the scan
-    scanjob = scanner.scan(name, ip, view, scan_type)
+    scanjob = scanner.scan(name, ip, port, view, scan_type)
     elapsedtime = process_time() - starttime
     logging.info(f'{name} processed for {elapsedtime}')
     return json.dumps(scanjob)
