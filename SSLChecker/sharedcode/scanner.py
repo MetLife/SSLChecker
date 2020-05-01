@@ -27,6 +27,8 @@ SynchronousScanner.DEFAULT_NETWORK_TIMEOUT = 3
 ERROR_MSG_CONNECTION_TIMEOUT = 'TCP connection to {}:{} timed-out'.format
 ERROR_MSG_UNKNOWN_CONNECTION = \
     'TCP connection to {}:{} encountered unknown error'.format
+
+
 def scan(name, ip, port, view, suite):
     """ Five inputs: web site name, ip, port
     split-dns view, and cipher suite """

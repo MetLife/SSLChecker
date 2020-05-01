@@ -1,15 +1,18 @@
-import azure.functions as func
-import SSLChecker.SSLChecker.main as _main
 import json
 
+import azure.functions as func
+
+import SSLChecker.SSLChecker.main as _main
+
 main = _main.main
+
 
 def test_policy_external_no_violations():
     # Construct a mock HTTP request
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/policy/external/microsoft.com',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'microsoft.com'}
@@ -30,7 +33,7 @@ def test_full_external():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/full/external/github.com',
+            url='/api/',
             route_params={'scan': 'full',
                           'view': 'external',
                           'name': 'github.com'}
@@ -51,7 +54,7 @@ def test_policy_external_violations():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/policy/external/espn.com',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'espn.com'}
@@ -72,7 +75,7 @@ def test_external_dns_name_not_resolved():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/policy/external/joegatt.com',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'joegatt.com'}
@@ -93,7 +96,7 @@ def test_external_dns_name_not_exist():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/policy/external/jeogatt.com',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'jeogatt.com'}
@@ -114,7 +117,7 @@ def test_external_sslyze_timeout():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/policy/external/{name}',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': name}
@@ -127,7 +130,7 @@ def test_external_sslyze_timeout():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'TCP connection to bbbbbbbbbbbbbbb.com:443 timed-out'
+    assert results["Message"] == f'TCP connection to {name}:443 timed-out'
 
 
 def test_external_missing_dns_name():
@@ -135,7 +138,7 @@ def test_external_missing_dns_name():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/policy/external',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': None}
@@ -158,7 +161,7 @@ def test_bad_dns_view_input():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/policy/{view_name}/microsoft.com',
+            url=f'/api/',
             route_params={'scan': 'policy',
                           'view': view_name,
                           'name': 'microsoft.com'}
@@ -181,7 +184,7 @@ def test_bad_policy_input():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/{policy_type}/external/microsoft.com',
+            url=f'/api/',
             route_params={'scan': policy_type,
                           'view': 'external',
                           'name': 'microsoft.com'}
@@ -203,7 +206,7 @@ def test_missing_dns_view():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/policy',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': None,
                           'name': None}
@@ -226,7 +229,7 @@ def test_bad_dns_name():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/policy/external/{dns_name}',
+            url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': dns_name}
@@ -272,7 +275,7 @@ def test_external_bad_port():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/policy/external/{dns_name}/{port}',
+            url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': dns_name,
@@ -297,7 +300,7 @@ def test_external_port_timeout():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/policy/external/{dns_name}/{port}',
+            url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': dns_name,
@@ -311,8 +314,8 @@ def test_external_port_timeout():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results['Error Type'] == 'Unknow Connection Error'
-    assert results["Message"] == f'TCP connection to {dns_name}:{port} encountered unknown error'
+    assert results['Error Type'] == 'Connection Timeout'
+    assert results["Message"] == f'TCP connection to {dns_name}:{port} timed-out'
 
 
 def test_external_port_not_in_range():
