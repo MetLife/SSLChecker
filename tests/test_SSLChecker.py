@@ -1,6 +1,10 @@
-import azure.functions as func
-from SSLChecker.SSLChecker import main
 import json
+
+import azure.functions as func
+
+import SSLChecker.SSLChecker.main as _main
+
+main = _main.main
 
 
 def test_policy_external_no_violations():
@@ -84,7 +88,7 @@ def test_external_dns_name_not_resolved():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Domain exits but no A record'
+    assert 'No Answer for joegatt.com using nameserver ' in results["Message"]
 
 
 def test_external_dns_name_not_exist():
@@ -103,20 +107,20 @@ def test_external_dns_name_not_exist():
 
     # Convert resp string to dict
     results = json.loads(resp)
-
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'The DNS name does not exist'
+    assert "Domain doesn't exist for jeogatt.com" in results["Message"]
 
 
 def test_external_sslyze_timeout():
     # Construct a mock HTTP request
+    name = 'bbbbbbbbbbbbbbb.com'
     req = func.HttpRequest(
             method='GET',
             body=None,
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'bbbbbbbbbbbbbbb.com'}
+                          'name': name}
             )
 
     # Call the function
@@ -126,7 +130,7 @@ def test_external_sslyze_timeout():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'TCP connection to bbbbbbbbbbbbbbb.com:443 timed-out'
+    assert results["Message"] == f'TCP connection to {name}:443 timed-out'
 
 
 def test_external_missing_dns_name():
@@ -147,21 +151,19 @@ def test_external_missing_dns_name():
     results = json.loads(resp)
 
     # Ensure error handling is working properly
-    assert results["Message"] == ("Please pass three parameters in the URI:"
-                                  " valid scan type: policy or full, "
-                                  "valid DNS view: internal or external, "
-                                  "and a valid DNS domain name. For example: "
-                                  "https://<functionname>.azurewebsite.net/api/full/www.google.com")
+    assert results['Error Type'] == 'Missing Parameter(s)'
+    assert results["Message"] == _main.ERROR_MSG_MISSING_PARAMETERS
 
 
 def test_bad_dns_view_input():
     # Construct a mock HTTP request
+    view_name = 'badinput'
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/',
             route_params={'scan': 'policy',
-                          'view': 'badinput',
+                          'view': view_name,
                           'name': 'microsoft.com'}
             )
 
@@ -172,17 +174,18 @@ def test_bad_dns_view_input():
     results = json.loads(resp)
 
     # Ensure error handling is working properly
-    assert results["Message"] == ("Please pass a valid DNS view"
-                                  ": internal or external")
+    assert results['Error Type'] == f"Invalid View '{view_name}'"
+    assert results["Message"] == _main.ERROR_MSG_INVALID_VIEW
 
 
 def test_bad_policy_input():
     # Construct a mock HTTP request
+    policy_type = 'pppppp'
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
-            route_params={'scan': 'pppppp',
+            url=f'/api/',
+            route_params={'scan': policy_type,
                           'view': 'external',
                           'name': 'microsoft.com'}
             )
@@ -194,8 +197,8 @@ def test_bad_policy_input():
     results = json.loads(resp)
 
     # Ensure error handling is working properly
-    assert results["Message"] == ("Please pass a valid scan"
-                                  " type: 'policy' or 'full'")
+    assert results["Error Type"] == f"Invalid scanner type '{policy_type}'"
+    assert results["Message"] == _main.ERROR_MSG_INVALID_SCANNER_TYPE
 
 
 def test_missing_dns_view():
@@ -216,22 +219,20 @@ def test_missing_dns_view():
     results = json.loads(resp)
 
     # Ensure error handling is working properly
-    assert results["Message"] == ("Please pass three parameters in the URI:"
-                                  " valid scan type: policy or full, "
-                                  "valid DNS view: internal or external, "
-                                  "and a valid DNS domain name. For example: "
-                                  "https://<functionname>.azurewebsite.net/api/full/www.google.com")
+    assert results["Error Type"] == 'Missing Parameter(s)'
+    assert results["Message"] == _main.ERROR_MSG_MISSING_PARAMETERS
 
 
 def test_bad_dns_name():
     # Construct a mock HTTP request
+    dns_name = 'bbbbbbbbb'
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'bbbbbbbbbb'}
+                          'name': dns_name}
             )
 
     # Call the function.
@@ -241,7 +242,8 @@ def test_bad_dns_name():
     results = json.loads(resp)
 
     # Ensure error handling is working properly
-    assert results["Message"] == "Not a valid formatted DNS name"
+    assert results["Error Type"] == 'Invalid FQDN'
+    assert ' is not a valid FQDN' in results["Message"]
 
 
 def test_missing_policy_view_dns_name():
@@ -261,24 +263,23 @@ def test_missing_policy_view_dns_name():
     # Convert resp string to dict
     results = json.loads(resp)
 
-    # Ensure error handling is working properly
-    assert results["Message"] == ("Please pass three parameters in the URI:"
-                                  " valid scan type: policy or full, "
-                                  "valid DNS view: internal or external, "
-                                  "and a valid DNS domain name. For example: "
-                                  "https://<functionname>.azurewebsite.net/api/full/www.google.com")
+    print(results)
+    assert results["Error Type"] == 'Missing Parameter(s)'
+    assert results["Message"] == _main.ERROR_MSG_MISSING_PARAMETERS
 
 
 def test_external_bad_port():
     # Construct a mock HTTP request
+    dns_name = 'yahoo.com'
+    port = 'a'
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'yahoo.com',
-                          'port': 'a'}
+                          'name': dns_name,
+                          'port': port}
             )
 
     # Call the function
@@ -288,18 +289,21 @@ def test_external_bad_port():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Please pass a valid port in range 1-65535'
+    assert results['Error Type'] == f"Invalid Port '{port}'"
+    assert results["Message"] == _main.ERROR_MSG_INVALID_PORT
 
 
 def test_external_port_timeout():
     # Construct a mock HTTP request
+    dns_name = 'yahoo.com'
+    port = '8443'
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'yahoo.com',
+                          'name': dns_name,
                           'port': '8443'}
             )
 
@@ -310,19 +314,21 @@ def test_external_port_timeout():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'TCP connection to yahoo.com:8443 timed-out'
+    assert results['Error Type'] == 'Connection Timeout'
+    assert results["Message"] == f'TCP connection to {dns_name}:{port} timed-out'
 
 
 def test_external_port_not_in_range():
     # Construct a mock HTTP request
+    port = '123456'
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/policy/external/espn.com/{port}',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'espn.com',
-                          'port': '123456'}
+                          'port': port}
             )
 
     # Call the function
@@ -332,4 +338,28 @@ def test_external_port_not_in_range():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Please pass a valid port in range 1-65535'
+    assert results['Error Type'] == f"Invalid Port '{port}'"
+    assert results["Message"] == _main.ERROR_MSG_INVALID_PORT
+
+
+def test_query_api():
+    req = func.HttpRequest(
+        method='GET',
+        body=None,
+        url=f'/api/tls',
+        params={'host': 'www.google.com', 'nameserver': '8.8.8.8'}
+        )
+    resp = main(req)
+    assert 'Results' in resp
+
+
+def test_query_api_error_handling():
+    req = func.HttpRequest(
+        method='GET',
+        body=None,
+        url=f'/api/tls',
+        params={'nameserver': '8.8.8.8'}
+        )
+    resp = main(req)
+    results = json.loads(resp)
+    assert results['Error Type'] == "Missing required parameter"

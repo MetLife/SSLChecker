@@ -1,11 +1,16 @@
 import pathlib
 from configparser import ConfigParser, ParsingError
+from typing import Tuple
 from urllib.parse import urlparse
+
 from dns import resolver
 from validators import domain
-from .errors import InvalidConfig, InvalidFQDN, UnknownError
-from typing import Tuple
-import os
+from .errors import InvalidConfig, InvalidFQDN, UnknownError, DNSError
+
+# Alias str type to better reflect the intented type and value
+fqdn = str
+ip = str
+
 
 def get_dns_options() -> Tuple[str, str]:
     '''
@@ -21,15 +26,14 @@ def get_dns_options() -> Tuple[str, str]:
         external_dns = parser.get('dns_view', 'external')
         internal_dns = parser.get('dns_view', 'internal')
     except ParsingError as err:
-        raise InvalidConfig(f'{config_file.resolve()}', err)
+        raise InvalidConfig('Invalid Configuration File '
+                            f'{config_file.resolve()}', err)
 
     return external_dns, internal_dns
 
-# alias str type to better reflect the intented type and value
-fqdn = str
-ip = str
 
-def _init_resolver(dnsserver:ip, timeout = 3, lifetime = 3) -> resolver.Resolver:
+def _init_resolver(dnsserver: ip, timeout: int,
+                   lifetime: int) -> resolver.Resolver:
     """
     initialize a resolver
     """
@@ -39,22 +43,13 @@ def _init_resolver(dnsserver:ip, timeout = 3, lifetime = 3) -> resolver.Resolver
     custom_resolver.nameservers = [dnsserver]
     return custom_resolver
 
-def resolve_dns(dnsserver:ip, dnsname:fqdn) -> ip:
+
+def resolve_dns(dnsserver: ip, dnsname: fqdn, timeout: int = 3,
+                lifetime: int = 3) -> ip:
     ''' Resolve dns name '''
     _iplist = []  # results
 
-    # Note to original author
-    # dnspython config
-    # actually, this is NOT needed, if you read the Resolver code, unless
-    # supplied a Cache object, it doesn't cache. in addition, the code
-    # below did not really flush the Cache, The Cache is a Class, flush
-    # is just a method, to do so, you really need to create a Cache object
-    # and then call the flush method as below
-    # i.e cache = resolver.Cache(); cache.flush()
-
-    #resolver.Cache.flush  # flush dnspython cache
-
-    res = _init_resolver(dnsserver)
+    res = _init_resolver(dnsserver, timeout, lifetime)
 
     try:
         answers = res.query(dnsname, 'A')   # explicit query for A record
@@ -62,20 +57,27 @@ def resolve_dns(dnsserver:ip, dnsname:fqdn) -> ip:
             _iplist.append(answer.address)
         return _iplist[0]  # Return the first IP of the DNS Answer
     except resolver.NoAnswer:
-        raise ValueError("Domain exits but no A record")
+        raise DNSError("DNS No Answer",
+                       f"No Answer for {dnsname} using nameserver {dnsserver}")
     except resolver.NXDOMAIN:
-        raise ValueError("The DNS name does not exist")
+        raise DNSError("DNS Non-Existing Domain",
+                       (f"Domain doesn't exist for {dnsname} "
+                        f"using nameserver {dnsserver}"))
     except resolver.Timeout:
-        raise ValueError("The DNS operation timed out")
+        raise DNSError("DNS operation timed out",
+                       (f"Operation not completed for {dnsname} within "
+                        f"{lifetime}  using nameserver {dnsserver}"))
+
     # you don't know if the DNS server is truely
     # offline or network condition preventing the DNS request to get to the
     # server, it's best to just use another custom error for this condition
-    except Exception as err:
-        raise UnknownError(
-            (f'unknown error encounter while resolving {dnsname}'
-             f'using dns server {dnsserver}'), err)
+    except Exception:
+        raise UnknownError("DNS Unknown Error",
+                           (f"Error encountered while resolving {dnsname} "
+                            f"using nameserver {dnsserver}"))
 
-def parse_name(name:str) -> fqdn:
+
+def parse_name(name: str) -> fqdn:
     ''' Parse a DNS name to ensure it does not contain http(s) '''
     parsed_name = urlparse(name)
 
@@ -88,4 +90,5 @@ def parse_name(name:str) -> fqdn:
     if domain(dns_name_candidate):
         return dns_name_candidate
     else:
-        raise InvalidFQDN(f'{name} is not a valid FQDN')  # Valid formatted DNS name not provided
+        raise InvalidFQDN('Invalid FQDN',
+                          f'{name} is not a valid FQDN')
