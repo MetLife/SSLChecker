@@ -7,7 +7,7 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "route": "{scan:alpha?}/{view:alpha?}/{name?}/{port?}", 
+      "route": "{scan:alpha}/{view:alpha?}/{name?}/{port?}",
       "methods": [
         "get"
       ]
