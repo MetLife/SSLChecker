@@ -24,7 +24,7 @@ ERROR_MSG_MISSING_PARAMETERS = \
     ("Please pass three parameters in the URI: "
      "valid scan type: policy or full, valid DNS view: internal or external, "
      "and a valid DNS domain name. For example: "
-     "https://sslchecker.metlife.com/api/full/external/www.google.com")
+     "https://<functionname>.azurewebsite.net/api/full/external/www.google.com")
 
 ERROR_MSG_INVALID_SCANNER_TYPE = \
     "Please pass a valid scan type: 'policy' or 'full'"
