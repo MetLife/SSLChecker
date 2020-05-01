@@ -9,7 +9,7 @@ def test_policy_external_no_violations():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url='/api/policy/external/microsoft.com',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'microsoft.com'}
@@ -30,7 +30,7 @@ def test_full_external():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url='/api/full/external/github.com',
             route_params={'scan': 'full',
                           'view': 'external',
                           'name': 'github.com'}
@@ -51,7 +51,7 @@ def test_policy_external_violations():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url='/api/policy/external/espn.com',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'espn.com'}
@@ -72,7 +72,7 @@ def test_external_dns_name_not_resolved():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url='/api/policy/external/joegatt.com',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'joegatt.com'}
@@ -85,7 +85,7 @@ def test_external_dns_name_not_resolved():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'Domain exits but no A record'
+    assert 'No Answer for joegatt.com using nameserver ' in results["Message"]
 
 
 def test_external_dns_name_not_exist():
@@ -93,7 +93,7 @@ def test_external_dns_name_not_exist():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url='/api/policy/external/jeogatt.com',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'jeogatt.com'}
@@ -104,20 +104,20 @@ def test_external_dns_name_not_exist():
 
     # Convert resp string to dict
     results = json.loads(resp)
-
     # Check the output to ensure the DNS name could not resolve
-    assert results["Message"] == 'The DNS name does not exist'
+    assert "Domain doesn't exist for jeogatt.com" in results["Message"]
 
 
 def test_external_sslyze_timeout():
     # Construct a mock HTTP request
+    name = 'bbbbbbbbbbbbbbb.com'
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/policy/external/{name}',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'bbbbbbbbbbbbbbb.com'}
+                          'name': name}
             )
 
     # Call the function
@@ -136,7 +136,7 @@ def test_external_missing_dns_name():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url='/api/policy/external',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': None}
@@ -159,7 +159,7 @@ def test_bad_dns_view_input():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/policy/{view_name}/microsoft.com',
             route_params={'scan': 'policy',
                           'view': view_name,
                           'name': 'microsoft.com'}
@@ -182,7 +182,7 @@ def test_bad_policy_input():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/{policy_type}/external/microsoft.com',
             route_params={'scan': policy_type,
                           'view': 'external',
                           'name': 'microsoft.com'}
@@ -204,7 +204,7 @@ def test_missing_dns_view():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url='/api/policy',
             route_params={'scan': 'policy',
                           'view': None,
                           'name': None}
@@ -227,7 +227,7 @@ def test_bad_dns_name():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/policy/external/{dns_name}',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': dns_name}
@@ -240,8 +240,8 @@ def test_bad_dns_name():
     results = json.loads(resp)
 
     # Ensure error handling is working properly
-    assert results["Error Type"] == f"Invalid DNS Name '{dns_name}'"
-    assert results["Message"] == _main.ERROR_MSG_INVALID_DNS_NAME
+    assert results["Error Type"] == 'Invalid FQDN'
+    assert ' is not a valid FQDN' in results["Message"]
 
 
 def test_missing_policy_view_dns_name():
@@ -261,7 +261,7 @@ def test_missing_policy_view_dns_name():
     # Convert resp string to dict
     results = json.loads(resp)
 
-    # Ensure error handling is working properly
+    print(results)
     assert results["Error Type"] == 'Missing Parameter(s)'
     assert results["Message"] == _main.ERROR_MSG_MISSING_PARAMETERS
 
@@ -273,7 +273,7 @@ def test_external_bad_port():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/policy/external/{dns_name}/{port}',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': dns_name,
@@ -298,10 +298,10 @@ def test_external_port_timeout():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/policy/external/{dns_name}/{port}',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'yahoo.com',
+                          'name': dns_name,
                           'port': '8443'}
             )
 
@@ -322,7 +322,7 @@ def test_external_port_not_in_range():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url='/api/',
+            url=f'/api/policy/external/espn.com/{port}',
             route_params={'scan': 'policy',
                           'view': 'external',
                           'name': 'espn.com',
@@ -338,3 +338,26 @@ def test_external_port_not_in_range():
     # Check the output to ensure the DNS name could not resolve
     assert results['Error Type'] == f"Invalid Port '{port}'"
     assert results["Message"] == _main.ERROR_MSG_INVALID_PORT
+
+
+def test_query_api():
+    req = func.HttpRequest(
+        method='GET',
+        body=None,
+        url=f'/api/tls',
+        params={'host': 'www.google.com', 'nameserver': '8.8.8.8'}
+        )
+    resp = main(req)
+    assert 'Results' in resp
+
+
+def test_query_api_error_handling():
+    req = func.HttpRequest(
+        method='GET',
+        body=None,
+        url=f'/api/tls',
+        params={'nameserver': '8.8.8.8'}
+        )
+    resp = main(req)
+    results = json.loads(resp)
+    assert results['Error Type'] == "Missing required parameter"
