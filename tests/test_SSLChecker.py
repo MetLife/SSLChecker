@@ -127,7 +127,6 @@ def test_external_sslyze_timeout():
     results = json.loads(resp)
 
     # Check the output to ensure the DNS name could not resolve
-    assert results['Error Type'] == 'Connection Timeout'
     assert results["Message"] == 'TCP connection to bbbbbbbbbbbbbbb.com:443 timed-out'
 
 
