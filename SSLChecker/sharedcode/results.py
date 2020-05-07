@@ -7,7 +7,7 @@ def set_error(error_type, message):
 
 def new():
     return {
-            'Hostname':     None,
+            'Target':     None,
             'IP':           None,
             'MD5':          None,
             'View':         None,

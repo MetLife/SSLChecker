@@ -15,7 +15,7 @@ def test_policy_external_no_violations():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'microsoft.com'}
+                          'target': 'microsoft.com'}
             )
 
     # Call the function
@@ -36,7 +36,7 @@ def test_full_external():
             url='/api/',
             route_params={'scan': 'full',
                           'view': 'external',
-                          'name': 'github.com'}
+                          'target': 'github.com'}
             )
 
     # Call the function
@@ -57,7 +57,7 @@ def test_policy_external_violations():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'espn.com'}
+                          'target': 'espn.com'}
             )
 
     # Call the function.
@@ -78,7 +78,7 @@ def test_external_dns_name_not_resolved():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'joegatt.com'}
+                          'target': 'joegatt.com'}
             )
 
     # Call the function.
@@ -99,7 +99,7 @@ def test_external_dns_name_not_exist():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'jeogatt.com'}
+                          'target': 'jeogatt.com'}
             )
 
     # Call the function.
@@ -120,7 +120,7 @@ def test_external_sslyze_timeout():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': name}
+                          'target': name}
             )
 
     # Call the function
@@ -141,7 +141,7 @@ def test_external_missing_dns_name():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': None}
+                          'target': None}
             )
 
     # Call the function.
@@ -164,7 +164,7 @@ def test_bad_dns_view_input():
             url=f'/api/',
             route_params={'scan': 'policy',
                           'view': view_name,
-                          'name': 'microsoft.com'}
+                          'target': 'microsoft.com'}
             )
 
     # Call the function.
@@ -187,7 +187,7 @@ def test_bad_policy_input():
             url=f'/api/',
             route_params={'scan': policy_type,
                           'view': 'external',
-                          'name': 'microsoft.com'}
+                          'target': 'microsoft.com'}
             )
 
     # Call the function.
@@ -209,7 +209,7 @@ def test_missing_dns_view():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': None,
-                          'name': None}
+                          'target': None}
             )
 
     # Call the function.
@@ -232,7 +232,7 @@ def test_bad_dns_name():
             url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': dns_name}
+                          'target': dns_name}
             )
 
     # Call the function.
@@ -254,7 +254,7 @@ def test_missing_policy_view_dns_name():
             url='/api/',
             route_params={'scan': None,
                           'view': None,
-                          'name': None}
+                          'target': None}
             )
 
     # Call the function.
@@ -278,7 +278,7 @@ def test_external_bad_port():
             url=f'/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': dns_name,
+                          'target': dns_name,
                           'port': port}
             )
 
@@ -300,10 +300,10 @@ def test_external_port_timeout():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': dns_name,
+                          'target': dns_name,
                           'port': '8443'}
             )
 
@@ -324,10 +324,10 @@ def test_external_port_not_in_range():
     req = func.HttpRequest(
             method='GET',
             body=None,
-            url=f'/api/policy/external/espn.com/{port}',
+            url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'name': 'espn.com',
+                          'target': 'espn.com',
                           'port': port}
             )
 
@@ -347,7 +347,18 @@ def test_query_api():
         method='GET',
         body=None,
         url=f'/api/tls',
-        params={'host': 'www.google.com', 'nameserver': '8.8.8.8'}
+        params={'target': 'www.google.com', 'nameserver': '8.8.8.8'}
+        )
+    resp = main(req)
+    assert 'Results' in resp
+
+
+def test_query_api_by_ip():
+    req = func.HttpRequest(
+        method='GET',
+        body=None,
+        url='/api/tls',
+        params={'target': '140.82.113.4', 'nameserver': '8.8.8.8'}
         )
     resp = main(req)
     assert 'Results' in resp
@@ -357,9 +368,28 @@ def test_query_api_error_handling():
     req = func.HttpRequest(
         method='GET',
         body=None,
-        url=f'/api/tls',
+        url='/api/tls',
         params={'nameserver': '8.8.8.8'}
         )
     resp = main(req)
     results = json.loads(resp)
     assert results['Error Type'] == "Missing required parameter"
+
+
+def test_policy_external_by_ip_no_violations():
+    req = func.HttpRequest(
+            method='GET',
+            body=None,
+            url='/api/',
+            route_params={'scan': 'policy',
+                          'view': 'external',
+                          'target': '140.82.113.4'}
+        )
+    # Call the function.
+    resp = main(req)
+
+    # Convert resp string to dict
+    results = json.loads(resp)
+
+    # Check the output to ensure there are violations
+    assert results["Results"] == 'No Policy Violations'

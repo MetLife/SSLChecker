@@ -29,13 +29,13 @@ ERROR_MSG_UNKNOWN_CONNECTION = \
     'TCP connection to {}:{} encountered unknown error'.format
 
 
-def scan(name, ip, port, view, suite):
+def scan(target, ip, port, view, suite):
     """ Five inputs: web site name, ip, port
     split-dns view, and cipher suite """
 
     try:
         server_tester = ServerConnectivityTester(
-            hostname=name,
+            hostname=target,
             ip_address=ip,
             port=port,
             tls_wrapped_protocol=TlsWrappedProtocolEnum.HTTPS
@@ -46,18 +46,18 @@ def scan(name, ip, port, view, suite):
     # Could not establish an SSL connection to the server
     except ConnectionToServerTimedOut:
         raise ConnectionError('Connection Timeout',
-                              ERROR_MSG_CONNECTION_TIMEOUT(name, port))
+                              ERROR_MSG_CONNECTION_TIMEOUT(target, port))
     except ServerConnectivityError:
         raise ConnectionError('Unknow Connection Error',
-                              ERROR_MSG_UNKNOWN_CONNECTION(name, port))
+                              ERROR_MSG_UNKNOWN_CONNECTION(target, port))
 
     # Create a new results dictionary
     scan_output = results.new()
 
     # I hash the combination of hostname and ip for tracking
-    key = md5((f'{name}' + ip).encode("utf-8")).hexdigest()
+    key = md5((f'{target}' + ip).encode("utf-8")).hexdigest()
     results.set_result(scan_output, "MD5", key)
-    results.set_result(scan_output, "Hostname", f'{name}')
+    results.set_result(scan_output, "Target", f'{target}')
     results.set_result(scan_output, "IP", ip)
     results.set_result(scan_output, "View", view)
 
