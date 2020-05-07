@@ -131,7 +131,7 @@ def path_params_scanner(req: func.HttpRequest) -> str:
 VALID_QUERY_PARAMS = ('host', 'nameserver', 'port', 'scan_type')
 
 ERROR_MSG_QUERY_EXAMPLE = (
-    "Example: https://sslchecker.metlife.com/api/ssl?"
+    "Example: https://sslchecker.exampleco.com/api/ssl?"
     "host=www.yahoo.com&port=8443")
 
 ERROR_MSG_INVALID_QUERY_PARAMS = ( "Valid params are: "
