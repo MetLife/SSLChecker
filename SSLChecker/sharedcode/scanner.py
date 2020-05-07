@@ -8,7 +8,8 @@ from sslyze.plugins.openssl_cipher_suites_plugin import Sslv20ScanCommand, \
     Tlsv12ScanCommand, Tlsv13ScanCommand
 from sslyze.synchronous_scanner import SynchronousScanner
 
-from ..sharedcode import results
+from . import results
+from .errors import ConnectionError
 
 # Policy prohibits the use of SSL 2.0/3.0 and TLS 1.0
 ciphersuites = {
@@ -24,8 +25,10 @@ SynchronousScanner.DEFAULT_NETWORK_RETRIES = 1
 SynchronousScanner.DEFAULT_NETWORK_TIMEOUT = 3
 
 ERROR_MSG_CONNECTION_TIMEOUT = 'TCP connection to {}:{} timed-out'.format
-ERROR_MSG_UNKNOWN_CONNECTION_ERR = \
+ERROR_MSG_UNKNOWN_CONNECTION = \
     'TCP connection to {}:{} encountered unknown error'.format
+
+
 def scan(name, ip, port, view, suite):
     """ Five inputs: web site name, ip, port
     split-dns view, and cipher suite """
@@ -42,13 +45,11 @@ def scan(name, ip, port, view, suite):
         ip = server_info.ip_address
     # Could not establish an SSL connection to the server
     except ConnectionToServerTimedOut:
-        error = results.set_error('Connection Timeout',
-                                  ERROR_MSG_CONNECTION_TIMEOUT(name, port))
-        return error
+        raise ConnectionError('Connection Timeout',
+                              ERROR_MSG_CONNECTION_TIMEOUT(name, port))
     except ServerConnectivityError:
-        error = results.set_error('Unknown Error',
-                                  ERROR_MSG_UNKNOW_CONNECTION_ERROR(name, port))
-        return error
+        raise ConnectionError('Unknow Connection Error',
+                              ERROR_MSG_UNKNOWN_CONNECTION(name, port))
 
     # Create a new results dictionary
     scan_output = results.new()

@@ -4,6 +4,7 @@
 def set_error(error_type, message):
     return {'Error Type': error_type, "Message": message}
 
+
 def new():
     return {
             'Hostname':     None,

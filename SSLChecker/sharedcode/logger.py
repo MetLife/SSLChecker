@@ -78,7 +78,7 @@ _log_level_mapping = {'debug': logging.DEBUG,
                      'error': logging.ERROR}
 
 DEFAULT_DEBUG_LOG_FORMATTER = \
-    logging.Formatter('%(asctime)s | %(levelname)s | %(filename)s: %(lineno)d | %(message)s')
+    logging.Formatter('%(asctime)s | %(levelname)s | %(filename)s: %(lineno)5d | %(message)s')
 DEFAULT_INFO_LOG_FORMATTER = \
     logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
 DEFAULT_WARNING_LOG_FORMATTER = \
