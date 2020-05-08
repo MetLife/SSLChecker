@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import logging
 from typing import Tuple, Mapping
@@ -12,10 +13,10 @@ from ..sharedcode import results
 from ..sharedcode.errors import (InvalidRequest, DNSError, InvalidConfig,
                                  ConnectionError, InvalidFQDN)
 
-external_dns, internal_dns = shared_dns.get_dns_options()
+EXTERNAL_DNS, INTERNAL_DNS = shared_dns.get_dns_options()
 
-dnsview = {"external": external_dns,
-           "internal": internal_dns}
+DNSVIEW = {"external": EXTERNAL_DNS,
+           "internal": INTERNAL_DNS}
 
 # Valid scan types
 VALID_SCAN_TYPES = ['policy', 'full']
@@ -23,8 +24,8 @@ VALID_SCAN_TYPES = ['policy', 'full']
 ERROR_MSG_MISSING_PARAMETERS = \
     ("Please pass three parameters in the URI: "
      "valid scan type: policy or full, valid DNS view: internal or external, "
-     "and a valid DNS domain name. For example: "
-     "https://<functionname>.azurewebsite.net/api/full/external/www.google.com")
+     "and a valid DNS domain name or IP. For example: "
+     "https://<functionname>.azurewebsite.net/api/full/external/github.com")
 
 ERROR_MSG_INVALID_SCANNER_TYPE = \
     "Please pass a valid scan type: 'policy' or 'full'"
@@ -41,7 +42,8 @@ ERROR_MSG_INVALID_DNS_NAME = \
 ERROR_MSG_INVALID_PORT = \
     "Please pass a valid port in range 1-65535"
 
-def verify_port(port:str) -> int:
+
+def verify_port(port: str) -> int:
     """
     raises InvalidRequest
     """
@@ -53,7 +55,7 @@ def verify_port(port:str) -> int:
     return _port
 
 
-def verify_scan_type(scan_type:str) -> str:
+def verify_scan_type(scan_type: str) -> str:
     """
     verify scan type is valid
     """
@@ -66,7 +68,7 @@ def verify_scan_type(scan_type:str) -> str:
 
 def pre_scan_check(req: func.HttpRequest) -> Tuple[str, str, str, int, str]:
     """
-    return scan_type, view, name, and port, ip as a tuple if the request is
+    return scan_type, view, target, port, and ip as a tuple if the request is
     valid.
 
     raises
@@ -77,7 +79,7 @@ def pre_scan_check(req: func.HttpRequest) -> Tuple[str, str, str, int, str]:
     """
     scan_type = req.route_params.get('scan')
     view = req.route_params.get('view')
-    name = req.route_params.get('name')
+    target = req.route_params.get('target')
     port = req.route_params.get('port', '443')
     port = verify_port(port)
 
@@ -86,41 +88,47 @@ def pre_scan_check(req: func.HttpRequest) -> Tuple[str, str, str, int, str]:
      the Azure Function worker supplies a 404 if you do not supply all
      three routes in the URI. I made routes optional, this way we
      can handle errors gracefully """
-    if scan_type is None or view is None or name is None:
+    if scan_type is None or view is None or target is None:
         raise InvalidRequest("Missing Parameter(s)",
                              ERROR_MSG_MISSING_PARAMETERS)
 
     scan_type = verify_scan_type(scan_type)
     # Check to ensure a valid DNS view was passed
     view = view.lower()
-    if view not in dnsview:
+    if view not in DNSVIEW:
         raise InvalidRequest(f"Invalid View '{view}'", ERROR_MSG_INVALID_VIEW)
 
     # this maybe best handled as part of loading the app instead of checking it
     # here
-    if dnsview.get(view) == '0.0.0.0':
+    if DNSVIEW.get(view) == '0.0.0.0':
         raise InvalidConfig('Missing DNS Server in config',
                             ERROR_MSG_MISSING_DNS_SERVER)
 
-    # Parse the name parameter to ensure it is a valid DNS name
-    # and does not contain http(s)
-    name = shared_dns.parse_name(name)
+    # See if a valid IP was passed, else check if it was a valid DNS name
+    try:
+        if ipaddress.IPv4Address(target):
+            ip = target
+    except:
+        # Parse the target parameter to ensure it is a valid FQDN
+        # and does not contain http(s)
+        target = shared_dns.parse_name(target)
 
-    """ Try to resolve the DNS name to an IP to ensure it exists.
-     We use the IP in the scan so that we can record which one we tested
-     which can be useful. """
-    ip = shared_dns.resolve_dns(dnsview.get(view), name)
+        """ Try to resolve the DNS name to an IP to ensure it exists.
+        We use the IP in the scan so that we can record which one we tested
+        which can be useful. """
+        ip = shared_dns.resolve_dns(DNSVIEW.get(view), target)
 
-    return scan_type, view, name, port, ip
+    return scan_type, view, target, port, ip
+
 
 def path_params_scanner(req: func.HttpRequest) -> str:
     """
     perform actual scan for path based parameters
     """
     try:
-        scan_type, view, name, port, ip = pre_scan_check(req)
+        scan_type, view, target, port, ip = pre_scan_check(req)
         # Run the scan
-        return json.dumps(scanner.scan(name, ip, port, view, scan_type))
+        return json.dumps(scanner.scan(target, ip, port, view, scan_type))
     except (InvalidRequest, InvalidConfig, DNSError, ConnectionError,
             InvalidFQDN) as err:
         return json.dumps(results.set_error(err.args[0], err.args[1]))
@@ -128,28 +136,29 @@ def path_params_scanner(req: func.HttpRequest) -> str:
         return json.dumps(results.set_error("Unexpected Error", str(err)))
 
 
-VALID_QUERY_PARAMS = ('host', 'nameserver', 'port', 'scan_type')
+VALID_QUERY_PARAMS = ('target', 'nameserver', 'port', 'scan_type')
 
 ERROR_MSG_QUERY_EXAMPLE = (
-    "Example: https://sslchecker.metlife.com/api/ssl?"
-    "host=www.yahoo.com&port=8443")
+    "Example: https://<functionname>.azurewebsite.net/api/ssl?"
+    "target=www.yahoo.com&port=8443")
 
-ERROR_MSG_INVALID_QUERY_PARAMS = ( "Valid params are: "
+ERROR_MSG_INVALID_QUERY_PARAMS = ("Valid params are: "
                                   f"{', '.join(VALID_QUERY_PARAMS)}")
-ERROR_MSG_INVALID_QUERY_URL = ( "Valid URL path must be 'ssl' or 'tls'. "
+ERROR_MSG_INVALID_QUERY_URL = ("Valid URL path must be 'ssl' or 'tls'. "
                                f"{ERROR_MSG_QUERY_EXAMPLE}")
-ERROR_MSG_INVALID_QUERY_MISSING_PARAMS = ( "'host' parameters is required. "
+ERROR_MSG_INVALID_QUERY_MISSING_PARAMS = ("'target' parameters is required. "
                                           f"{ERROR_MSG_QUERY_EXAMPLE}")
 
-def query_scanner_precheck(url:str,
-                           params:Mapping[str, str]
+
+def query_scanner_precheck(url: str,
+                           params: Mapping[str, str]
                            ) -> Tuple[str, str, int, str, str, str]:
     """
     check to ensure the url path as well as the query parameters are valid
 
     returns
     -------
-    scan_type, host, port, ip, nameserver, view
+    scan_type, target, port, ip, nameserver, view
 
     raises
     ------
@@ -159,10 +168,11 @@ def query_scanner_precheck(url:str,
     if url.lower() not in VALID_QUERY_API_URL:
         raise InvalidRequest(f"Invalid URL Path '{url}'",
                              ERROR_MSG_INVALID_QUERY_URL)
-    if 'host' not in params:
+    if 'target' not in params:
         raise InvalidRequest(f'Missing required parameter',
                              ERROR_MSG_INVALID_QUERY_MISSING_PARAMS)
-    host = shared_dns.parse_name(params['host'])
+
+    target = params['target']
     scan_type = 'full'
     port = '443'
     nameserver = None
@@ -180,29 +190,36 @@ def query_scanner_precheck(url:str,
 
     view = 'custom'
     if nameserver is None:
-        if external_dns:
+        if EXTERNAL_DNS:
             view = 'external'
-            nameserver = external_dns
+            nameserver = EXTERNAL_DNS
         else:
             view = 'internal'
-            nameserver = internal_dns
+            nameserver = INTERNAL_DNS
 
-    ip = shared_dns.resolve_dns(nameserver, host)
+    # See if a valid IP was passed, else check if it was a valid DNS name
+    try:
+        if ipaddress.IPv4Address(target):
+            ip = target
+    except:
+        target = shared_dns.parse_name(target)
+        ip = shared_dns.resolve_dns(nameserver, target)
 
-    return scan_type, host, port, ip, nameserver, view
+    return scan_type, target, port, ip, nameserver, view
 
 
 VALID_QUERY_API_URL = ('ssl', 'tls')
 
-def query_params_scanner(url:str, params:Mapping[str, str]) -> str:
+
+def query_params_scanner(url: str, params: Mapping[str, str]) -> str:
     """
     new function behavior to handle query based scanner, it would default
     to external DNS view before using the Internal
     """
     try:
-        scan_type, host, port, ip, nameserver, view = \
+        scan_type, target, port, ip, nameserver, view = \
             query_scanner_precheck(url, params)
-        return json.dumps(scanner.scan(host, ip, port, view, scan_type))
+        return json.dumps(scanner.scan(target, ip, port, view, scan_type))
     except (InvalidRequest, InvalidConfig, DNSError, ConnectionError,
             InvalidFQDN) as err:
         return json.dumps(results.set_error(err.args[0], err.args[1]))
@@ -211,7 +228,7 @@ def query_params_scanner(url:str, params:Mapping[str, str]) -> str:
 
 
 def main(req: func.HttpRequest) -> str:
-    logging.info( 'Python HTTP trigger function processed a request '
+    logging.info('Python HTTP trigger function processed a request '
                  f'for url: {req.url}.')
     starttime = process_time()
     url_parsed = urlparse(req.url)
@@ -222,6 +239,7 @@ def main(req: func.HttpRequest) -> str:
     else:
         resp = query_params_scanner(url_path[0], req.params)
 
-    logging.info(f'Processed time for URL {req.url} took {process_time() - starttime}')
+    logging.info(f'Processing time for URL {req.url} took'
+                 f' {process_time() - starttime}')
 
     return resp
