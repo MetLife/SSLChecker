@@ -2,7 +2,7 @@
 
 ## Overview
 
-SSLChecker is a serverless API written in Python and running on Azure Functions. The API is based on Alban Diquet's [SSLyze](https://github.com/nabla-c0d3/sslyze) library. SSLChecker is used to identify obsolete versions of SSL/TLS (e.g., SSL 3.0, and TLS 1.0) on an endpoint, or perform a full scan to identify all supported versions of SSL/TLS on an endpoint.
+SSLChecker is a serverless API written in Python and running on Azure Functions. The API is based on Alban Diquet's [SSLyze](https://github.com/nabla-c0d3/sslyze) library. SSLChecker is used to identify obsolete versions of SSL/TLS (e.g., SSL 3.0, and TLS 1.0/1.1) on an endpoint, or perform a full scan to identify all supported versions of SSL/TLS on an endpoint.
 
 ## Pre-requisites
 
