@@ -5,8 +5,8 @@ def set_error(error_type, message):
     return {"Error Type": error_type, "Message": message}
 
 
-def new():
-    return {"Target": None, "IP": None, "MD5": None, "View": None, "Results": []}
+def new_result_set():
+    return {"Target": None, "IP": None, "MD5": None, "Scan": None, "View": None, "Results": []}
 
 
 def set_result(results, key, value):

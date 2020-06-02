@@ -90,4 +90,7 @@ test-output.xml
 # vim swap
 *.swp
 
+# pylint
+*.pylintrc
+
 todo.txt

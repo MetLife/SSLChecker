@@ -6,9 +6,11 @@ SSLChecker is a serverless API written in Python and running on Azure Functions.
 
 ## Pre-requisites
 
-Development - To set up a local development environment, follow the guidance from Microsoft [here](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?pivots=programming-language-python&tabs=bash%2Cbrowser).
+__Python__ - Python 3.7 (64-bit) and above.
 
-Deployment - As part of the above setup, you will be able to deploy to Azure using the azure-cli. Additionally, Azure DevOps or another CI/CD tool is capable of deploying to Azure.
+__Development__ - To set up a local development environment, follow the guidance from Microsoft [here](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?pivots=programming-language-python&tabs=bash%2Cbrowser).
+
+__Deployment__ - As part of the above setup, you will be able to deploy to Azure using the azure-cli. Additionally, Azure DevOps or another CI/CD tool is capable of deploying to Azure.
 
 ## Usage
 
@@ -18,7 +20,7 @@ Invoke the function on the command line using curl:
 
 There are four parts to pass to the URI: scan, view, target, and port.
 
-"scan" is the type of scan: policy or full. Currently, the default policy prohibits using SSL 2.0/3.0 and TLS 1.0/1.1, so the policy scan will identify which unsupported ciphers are in use, if any. A full scan will report back all supported ciphers. In a future release I will make this configurable.
+"scan" is the type of scan: policy or full. Currently, the default policy prohibits using SSL 2.0/3.0, TLS 1.0/1.1 and some TLS 1.2 ciphers, so the policy scan will identify which unsupported ciphers are in use, if any. A full scan will report back all supported ciphers.
 
 Since corporations often use [split-view DNS](https://en.wikipedia.org/wiki/Split-horizon_DNS), "view" in this context is the network viewpoint you want to scan, either internal or external. This is accomplished by specifying a valid DNS server to use for name resolution. The default value for external will use OpenDNS (e.g. 208.67.222.222). The default for internal will be 0.0.0.0 and will result in an error if a scan is attempted and no internal DNS server is specified. Please modify the config.ini file to use an internal DNS server.
 

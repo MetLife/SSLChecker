@@ -1,45 +1,51 @@
 from hashlib import md5
 
-from sslyze.server_connectivity_tester import (
+from sslyze import (
+    ServerNetworkLocationViaDirectConnection,
     ServerConnectivityTester,
-    ServerConnectivityError,
-    ConnectionToServerTimedOut,
+    errors,
+    ScanCommand,
+    Scanner,
+    ServerScanRequest,
 )
-from sslyze.ssl_settings import TlsWrappedProtocolEnum
-from sslyze.plugins.openssl_cipher_suites_plugin import (
-    Sslv20ScanCommand,
-    Sslv30ScanCommand,
-    Tlsv10ScanCommand,
-    Tlsv11ScanCommand,
-    Tlsv12ScanCommand,
-    Tlsv13ScanCommand,
-)
-from sslyze.synchronous_scanner import SynchronousScanner
 
 from . import results
 from .errors import ConnectionError
 
-# Policy prohibits the use of SSL 2.0/3.0 and TLS 1.0
-ciphersuites = {
+# Policy prohibits the use of SSL 2.0/3.0, TLS 1.0/1.1 and
+# some TLS 1.2 cipher suites
+CIPHER_SUITES = {
     "policy": [
-        Sslv20ScanCommand(),
-        Sslv30ScanCommand(),
-        Tlsv10ScanCommand(),
-        Tlsv11ScanCommand(),
+        ScanCommand.SSL_2_0_CIPHER_SUITES,
+        ScanCommand.SSL_3_0_CIPHER_SUITES,
+        ScanCommand.TLS_1_0_CIPHER_SUITES,
+        ScanCommand.TLS_1_1_CIPHER_SUITES,
+        ScanCommand.TLS_1_2_CIPHER_SUITES,
     ],
     "full": [
-        Sslv20ScanCommand(),
-        Sslv30ScanCommand(),
-        Tlsv10ScanCommand(),
-        Tlsv11ScanCommand(),
-        Tlsv12ScanCommand(),
-        Tlsv13ScanCommand(),
+        ScanCommand.SSL_2_0_CIPHER_SUITES,
+        ScanCommand.SSL_3_0_CIPHER_SUITES,
+        ScanCommand.TLS_1_0_CIPHER_SUITES,
+        ScanCommand.TLS_1_1_CIPHER_SUITES,
+        ScanCommand.TLS_1_2_CIPHER_SUITES,
+        ScanCommand.TLS_1_3_CIPHER_SUITES,
     ],
 }
 
-# sslyze config
-SynchronousScanner.DEFAULT_NETWORK_RETRIES = 1
-SynchronousScanner.DEFAULT_NETWORK_TIMEOUT = 3
+# Currently, only The following TLS 1.2 ciphers are considered "strong"
+ALLOWED_TLS12_CIPHERS = {
+    "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+    "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+    "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+    "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+    "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+    "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+}
+
 
 ERROR_MSG_CONNECTION_TIMEOUT = "TCP connection to {}:{} timed-out".format
 ERROR_MSG_UNKNOWN_CONNECTION = (
@@ -51,44 +57,62 @@ def scan(target, ip, port, view, suite):
     """ Five inputs: web site name, ip, port
     split-dns view, and cipher suite """
 
+    server_location = ServerNetworkLocationViaDirectConnection(target, port, ip)
+
+    # This line checks to see if the host is online
     try:
-        server_tester = ServerConnectivityTester(
-            hostname=target,
-            ip_address=ip,
-            port=port,
-            tls_wrapped_protocol=TlsWrappedProtocolEnum.HTTPS,
-        )
-        # This line checks to see if the host is online
-        server_info = server_tester.perform()
-        ip = server_info.ip_address
-    # Could not establish an SSL connection to the server
-    except ConnectionToServerTimedOut:
+        server_info = ServerConnectivityTester().perform(server_location)
+    except errors.ConnectionToServerTimedOut:
         raise ConnectionError(
             "Connection Timeout", ERROR_MSG_CONNECTION_TIMEOUT(target, port)
         )
-    except ServerConnectivityError:
+    except errors.ConnectionToServerFailed:
         raise ConnectionError(
-            "Unknow Connection Error", ERROR_MSG_UNKNOWN_CONNECTION(target, port)
+            "Unknown Connection Error", ERROR_MSG_UNKNOWN_CONNECTION(target, port)
         )
 
     # Create a new results dictionary
-    scan_output = results.new()
+    scan_output = results.new_result_set()
 
     # I hash the combination of hostname and ip for tracking
     key = md5((target + ip).encode("utf-8")).hexdigest()
     results.set_result(scan_output, "MD5", key)
-    results.set_result(scan_output, "Target", f"{target}")
-    results.set_result(scan_output, "IP", ip)
+    results.set_result(scan_output, "Target", f"{target}:{port}")
+    results.set_result(scan_output, "IP", f"{ip}:{port}")
+    results.set_result(scan_output, "Scan", suite)
     results.set_result(scan_output, "View", view)
 
-    for suite in ciphersuites.get(suite):
-        synchronous_scanner = SynchronousScanner()
-        scan_result = synchronous_scanner.run_scan_command(server_info, suite)
+    scanner = Scanner()
+    server_scan_req = ServerScanRequest(
+        server_info=server_info, scan_commands=CIPHER_SUITES.get(suite)
+    )
+    scanner.queue_scan(server_scan_req)
 
-        for cipher in scan_result.accepted_cipher_list:
-            results.set_ciphers(
-                scan_output, {"Version": cipher.ssl_version.name, "Cipher": cipher.name}
-            )
+    for result in scanner.get_results():
+        for cipher_suite in CIPHER_SUITES.get(suite):
+            scan_result = result.scan_commands_results[cipher_suite]
+
+            for accepted_cipher_suite in scan_result.accepted_cipher_suites:
+                if suite == "policy" and scan_result.tls_version_used.name == "TLS_1_2":
+                    if (
+                        accepted_cipher_suite.cipher_suite.name
+                        not in ALLOWED_TLS12_CIPHERS
+                    ):
+                        results.set_ciphers(
+                            scan_output,
+                            {
+                                "Version": f"{scan_result.tls_version_used.name}",
+                                "Cipher": f"{accepted_cipher_suite.cipher_suite.name}",
+                            },
+                        )
+                else:
+                    results.set_ciphers(
+                        scan_output,
+                        {
+                            "Version": f"{scan_result.tls_version_used.name}",
+                            "Cipher": f"{accepted_cipher_suite.cipher_suite.name}",
+                        },
+                    )
 
     if len(scan_output["Results"]) == 0:
         results.set_result(scan_output, "Results", "No Policy Violations")

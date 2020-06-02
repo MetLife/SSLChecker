@@ -15,7 +15,7 @@ def test_policy_external_no_violations():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'target': 'microsoft.com'}
+                          'target': 'api.metlife.com'}
             )
 
     # Call the function
@@ -383,7 +383,7 @@ def test_policy_external_by_ip_no_violations():
             url='/api/',
             route_params={'scan': 'policy',
                           'view': 'external',
-                          'target': '140.82.113.4'}
+                          'target': '216.163.251.205'}
         )
     # Call the function.
     resp = main(req)
