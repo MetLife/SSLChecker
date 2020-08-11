@@ -83,8 +83,11 @@ def scan(target, ip, port, view, suite):
     results.set_result(scan_output, "View", view)
 
     scanner = Scanner()
+    # Ignore type error on get(key) as it defaults to None
+    # https://docs.python.org/3/library/stdtypes.html#dict.get
+    # We supply the values in the dict
     server_scan_req = ServerScanRequest(
-        server_info=server_info, scan_commands=CIPHER_SUITES.get(suite)
+        server_info=server_info, scan_commands=CIPHER_SUITES.get(suite)  # type: ignore
     )
     scanner.queue_scan(server_scan_req)
 
