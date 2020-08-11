@@ -1,7 +1,7 @@
 azure-functions
-dnspython==1.16.0
+dnspython==2.00.0
 requests==2.22.0
 sslyze==3.0.8
-validators==0.15.0
+validators==0.17.1
 typing-extensions==3.7.4.2
 pytest==5.4.3

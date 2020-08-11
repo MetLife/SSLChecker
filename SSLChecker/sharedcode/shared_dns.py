@@ -45,18 +45,20 @@ def _init_resolver(dnsserver: ip, timeout: int, lifetime: int) -> resolver.Resol
 
 
 def resolve_dns(
-    dnsserver: ip, dnsname: fqdn, timeout: int = 3, lifetime: int = 3
-) -> ip:
+        dnsserver: ip, dnsname: fqdn,
+        timeout: int = 3, lifetime: int = 3
+        ) -> ip:
     """ Resolve dns name """
     _iplist = []  # results
 
     res = _init_resolver(dnsserver, timeout, lifetime)
 
     try:
-        answers = res.query(dnsname, "A")  # explicit query for A record
-        for answer in answers:
+        answers = res.resolve(dnsname, search=False)  # explicit query for A record
+        for answer in answers.rrset:
             _iplist.append(answer.address)
         return _iplist[0]  # Return the first IP of the DNS Answer
+
     except resolver.NoAnswer:
         raise DNSError(
             "DNS No Answer", f"No Answer for {dnsname} using nameserver {dnsserver}"
@@ -98,7 +100,7 @@ def parse_name(name: str) -> fqdn:
         dns_name_candidate = parsed_name.path
 
     # The below ensures a valid domain was supplied
-    if domain(dns_name_candidate):
-        return dns_name_candidate
-    else:
+    if not domain(dns_name_candidate):
         raise InvalidFQDN("Invalid FQDN", f"{name} is not a valid FQDN")
+
+    return dns_name_candidate

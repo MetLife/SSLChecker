@@ -80,6 +80,7 @@ def pre_scan_check(req: func.HttpRequest) -> Tuple[str, str, str, int, str]:
     scan_type = req.route_params.get('scan')
     view = req.route_params.get('view')
     target = req.route_params.get('target')
+    # Default to TCP 443 if no port is passed
     port = req.route_params.get('port', '443')
     port = verify_port(port)
 
@@ -105,6 +106,8 @@ def pre_scan_check(req: func.HttpRequest) -> Tuple[str, str, str, int, str]:
                             ERROR_MSG_MISSING_DNS_SERVER)
 
     # See if a valid IP was passed, else check if it was a valid DNS name
+    ip = ""
+
     try:
         if ipaddress.IPv4Address(target):
             ip = target
@@ -116,7 +119,11 @@ def pre_scan_check(req: func.HttpRequest) -> Tuple[str, str, str, int, str]:
         """ Try to resolve the DNS name to an IP to ensure it exists.
         We use the IP in the scan so that we can record which one we tested
         which can be useful. """
-        ip = shared_dns.resolve_dns(DNSVIEW.get(view), target)
+
+        # Ignore type error on get(key) as it defaults to None
+        # https://docs.python.org/3/library/stdtypes.html#dict.get
+        # I check that the key exists
+        ip = shared_dns.resolve_dns(DNSVIEW.get(view), target)  # type: ignore
 
     return scan_type, view, target, port, ip
 
@@ -174,7 +181,7 @@ def query_scanner_precheck(url: str,
 
     target = params['target']
     scan_type = 'full'
-    port = '443'
+    port = 443
     nameserver = None
 
     for param in params:
@@ -198,6 +205,8 @@ def query_scanner_precheck(url: str,
             nameserver = INTERNAL_DNS
 
     # See if a valid IP was passed, else check if it was a valid DNS name
+    ip = ""
+
     try:
         if ipaddress.IPv4Address(target):
             ip = target
