@@ -1,11 +1,15 @@
-# Setters for the results dictionary
+""" Setters for the results dictionary """
+
+from typing import Dict, Any
 
 
-def set_error(error_type, message):
+def set_error(error_type, message) -> Dict[str, str]:
     return {"Error Type": error_type, "Message": message}
 
 
-def new_result_set():
+def new_result_set() -> Dict[str, Any]:
+    """ Result set """
+
     return {"Target": None, "IP": None, "MD5": None, "Scan": None, "View": None, "Results": []}
 
 
