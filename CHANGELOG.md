@@ -21,3 +21,9 @@
 - Upgraded dnspython to 2.0.x and fixed deprecated call to dns.resolver.query()
 - Upgraded validators to 0.17
 - Various pylint and type checking fixes
+
+# v2.2.0
+- Upgraded SSLyze to 3.1
+- Removed pytest from requirements
+- Various pylint and type checking fixes
+- Removed TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 and TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256 from "strong" TLS 1.2 ciphers

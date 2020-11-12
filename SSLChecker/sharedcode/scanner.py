@@ -1,4 +1,5 @@
 from hashlib import md5
+from typing import Dict, Any
 
 from sslyze import (
     ServerNetworkLocationViaDirectConnection,
@@ -33,17 +34,16 @@ CIPHER_SUITES = {
 }
 
 # Currently, only The following TLS 1.2 ciphers are considered "strong"
-ALLOWED_TLS12_CIPHERS = {
+OK_TLS12_CIPHERS = {
     "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
     "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
     "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
     "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
     "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
     "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
     "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
     "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
-    "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+    "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
 }
 
 
@@ -53,7 +53,7 @@ ERROR_MSG_UNKNOWN_CONNECTION = (
 )
 
 
-def scan(target, ip, port, view, suite):
+def scan(target, ip, port, view, suite) -> Dict[str, Any]:
     """ Five inputs: web site name, ip, port
     split-dns view, and cipher suite """
 
@@ -99,7 +99,7 @@ def scan(target, ip, port, view, suite):
                 if suite == "policy" and scan_result.tls_version_used.name == "TLS_1_2":
                     if (
                         accepted_cipher_suite.cipher_suite.name
-                        not in ALLOWED_TLS12_CIPHERS
+                        not in OK_TLS12_CIPHERS
                     ):
                         results.set_ciphers(
                             scan_output,

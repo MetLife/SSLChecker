@@ -1,3 +1,5 @@
+""" Shared module for dns operations """
+
 import pathlib
 from configparser import ConfigParser, ParsingError
 from typing import Tuple
@@ -8,8 +10,8 @@ from validators import domain
 from .errors import InvalidConfig, InvalidFQDN, UnknownError, DNSError
 
 # Alias str type to better reflect the intented type and value
-fqdn = str
-ip = str
+Fqdn = str
+IpAddress = str
 
 
 def get_dns_options() -> Tuple[str, str]:
@@ -33,7 +35,7 @@ def get_dns_options() -> Tuple[str, str]:
     return external_dns, internal_dns
 
 
-def _init_resolver(dnsserver: ip, timeout: int, lifetime: int) -> resolver.Resolver:
+def _init_resolver(dnsserver: IpAddress, timeout: int, lifetime: int) -> resolver.Resolver:
     """
     initialize a resolver
     """
@@ -45,9 +47,9 @@ def _init_resolver(dnsserver: ip, timeout: int, lifetime: int) -> resolver.Resol
 
 
 def resolve_dns(
-        dnsserver: ip, dnsname: fqdn,
+        dnsserver: IpAddress, dnsname: Fqdn,
         timeout: int = 3, lifetime: int = 3
-        ) -> ip:
+        ) -> IpAddress:
     """ Resolve dns name """
     _iplist = []  # results
 
@@ -90,7 +92,7 @@ def resolve_dns(
         )
 
 
-def parse_name(name: str) -> fqdn:
+def parse_name(name: str) -> Fqdn:
     """ Parse a DNS name to ensure it does not contain http(s) """
     parsed_name = urlparse(name)
 
